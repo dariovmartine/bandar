@@ -2,17 +2,17 @@ import java.util.Scanner;
 
 task getProbeData(type: Task) {
      
-    def lastCommitIdProperties = executeOnShell("git rev-list -1 HEAD -- properties")
+    def lastCommitIdProperties = executeOnShell("git rev-list  --abbrev-commit -1 HEAD -- properties")
     
-    def lastCommitIdCodigo = executeOnShell("git rev-list -1 HEAD -- codigo")
+    def lastCommitIdCodigo = executeOnShell("git rev-list  --abbrev-commit -1 HEAD -- codigo")
     
     def lastTagProperties = executeOnShell("git describe --tags $lastCommitIdProperties");
         
     def lastTagCodigo = executeOnShell("git describe --tags $lastCommitIdCodigo");
     
-    def lastBranchProperties =  executeOnShell("git branch -r --contains $lastCommitIdProperties");
+    def lastBranchProperties =  executeOnShell("git reflog show --all | grep $lastCommitIdProperties | cut -d/ -f3- | cut -d@ -f1");
     
-    def lastBranchCodigo = executeOnShell("git branch -r --contains $lastCommitIdCodigo");    
+    def lastBranchCodigo = executeOnShell("git reflog show --all | grep $lastCommitIdCodigo | cut -d/ -f3- | cut -d@ -f1");    
     
     def text = "{\n \"artifact\" : \"$lastBranchCodigo:$lastTagCodigo\",\n \"props\" : \"$lastBranchProperties:$lastTagProperties\"\n}\n"
     
