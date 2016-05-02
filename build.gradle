@@ -1,0 +1,50 @@
+import java.util.Scanner;
+
+task getProbeData(type: Task) {
+     
+    def lastCommitIdProperties = executeOnShell("git rev-list -1 HEAD -- properties")
+    
+    def lastCommitIdCodigo = executeOnShell("git rev-list -1 HEAD -- codigo")
+    
+    def lastTagProperties = executeOnShell("git describe --tags $lastCommitIdProperties");
+        
+    def lastTagCodigo = executeOnShell("git describe --tags $lastCommitIdCodigo");
+    
+    def lastBranchProperties =  executeOnShell("git branch --contains $lastCommitIdProperties");
+    
+    def lastBranchCodigo = executeOnShell("git branch --contains $lastCommitIdCodigo");    
+    
+    new File("${project.rootDir}/branchtag").newWriter().withWriter { w ->
+        w << " { \"artifact\" : \"<$lastBranchCodigo>:<$lastTagCodigo>\",  \"props\" : \"<$lastBranchProperties>:<$lastTagProperties>\" } "
+    }
+}
+
+
+def executeOnShell(String command) {
+    return executeOnShell(command, new File("${project.rootDir}"))
+}
+ 
+def executeOnShell(String command, File workingDir) {
+        
+    def process = new ProcessBuilder(addShellPrefix(command))
+                                    .directory(workingDir)
+                                    .redirectErrorStream(true) 
+                                    .start()
+        
+    def text = new Scanner(process.inputStream,"UTF-8").useDelimiter("\\A").next();
+    process.waitFor();
+        
+    if(!process.exitValue()) {
+            "N/A"  // No disponible
+    }
+    
+    text.replaceAll("[\n\r]", "");
+}
+ 
+def addShellPrefix(String command) {
+    def commandArray = new String[3]
+    commandArray[0] = "sh"
+    commandArray[1] = "-c"
+    commandArray[2] = command
+    return commandArray
+}
