@@ -10,12 +10,16 @@ task getProbeData(type: Task) {
         
     def lastTagCodigo = executeOnShell("git describe --tags $lastCommitIdCodigo");
     
-    def lastBranchProperties =  executeOnShell("git branch --contains $lastCommitIdProperties");
+    def lastBranchProperties =  executeOnShell("git branch -r --contains $lastCommitIdProperties");
     
-    def lastBranchCodigo = executeOnShell("git branch --contains $lastCommitIdCodigo");    
+    def lastBranchCodigo = executeOnShell("git branch -r --contains $lastCommitIdCodigo");    
+    
+    def text = "{\n \"artifact\" : \"$lastBranchCodigo:$lastTagCodigo\",\n \"props\" : \"$lastBranchProperties:$lastTagProperties\"\n}\n"
+    
+    println text;
     
     new File("${project.rootDir}/branchtag").newWriter().withWriter { w ->
-        w << " { \"artifact\" : \"<$lastBranchCodigo>:<$lastTagCodigo>\",  \"props\" : \"<$lastBranchProperties>:<$lastTagProperties>\" } "
+        w << text
     }
 }
 
@@ -34,11 +38,13 @@ def executeOnShell(String command, File workingDir) {
     def text = new Scanner(process.inputStream,"UTF-8").useDelimiter("\\A").next();
     process.waitFor();
         
-    if(!process.exitValue()) {
-            "N/A"  // No disponible
-    }
+    if (process.exitValue() != 0) {
+
+        "N/A"  // No disponible
+    } else {
     
-    text.replaceAll("[\n\r]", "");
+        text.replaceAll("[\n\r]", "");
+    }
 }
  
 def addShellPrefix(String command) {
